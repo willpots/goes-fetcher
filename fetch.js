@@ -46,10 +46,24 @@ String.prototype.padStart = function(targetLength, paddedString = ' ') {
 // };
 
 const uaHeader = ' -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"';
+const keepAliveHeader = '-H "Connection: keep-alive"';
 
 function download(uri, filename) {
+  let retries = 2;
   console.log('downloading ', uri);
-  return exec(`curl ${uaHeader} ${uri} > ${filename}`);
+  const downloadCommand = `curl ${uaHeader} ${keepAliveHeader} ${uri} > ${filename}`;
+  return Promise.resolve()
+    .then(() => exec(downloadCommand))
+    .then(() => console.log('downloaded ', uri))
+    .catch((e) => {
+      if (retries) {
+        retries -= 1;
+        console.log('retrying ', uri);
+        return exec(downloadCommand)
+      } else {
+        throw e;
+      }
+    });
 }
 const zoom = 4;
 const maxIndex = Math.pow(2, zoom);
@@ -81,17 +95,19 @@ function trimTime(time) {
 }
 
 function downloadImages(date, time) {
-  const promises = [];
+  let chain = Promise.resolve();
+  const z = zoom.toString().padStart(2, '0');
   for (let yIndex = yBounds.min; yIndex < yBounds.max; yIndex++) {
+    const y = yIndex.toString().padStart(3, '0');
     for (let xIndex = xBounds.min; xIndex < xBounds.max; xIndex++) {
       const x = xIndex.toString().padStart(3, '0');
-      const y = yIndex.toString().padStart(3, '0');
-      const z = zoom.toString().padStart(2, '0');
-      const promise = download(imageUrl(date, time, x, y, z), imageName(x, y, z));
-      promises.push(promise)
+      chain = chain.then(() => {
+        return download(imageUrl(date, time, x, y, z), imageName(x, y, z))
+          .then(() => sleep(5000));
+      });
     }
   }
-  return Promise.all(promises);
+  return chain;
 }
 
 function mergeImages() {
