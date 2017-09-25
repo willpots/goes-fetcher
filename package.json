@@ -9,9 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "canvas": "^1.6.7",
     "fetch-promise": "^1.0.2",
-    "merge-images": "^1.0.5",
     "request": "^2.82.0",
     "request-promise": "^4.2.2"
   }
