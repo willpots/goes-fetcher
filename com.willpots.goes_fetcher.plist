@@ -12,7 +12,7 @@
     <key>RunAtLoad</key>
     <true/>
     <key>StartInterval</key>
-    <integer>1800</integer>
+    <integer>300</integer>
     <key>StandardInPath</key>
     <string>/tmp/test.stdin</string>
     <key>StandardOutPath</key>

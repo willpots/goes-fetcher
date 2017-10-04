@@ -1,6 +1,8 @@
 const rp = require('request-promise');
+var fs = require('fs');
 const gm = require('gm').subClass({imageMagick: true});
 const { exec } = require('child_process');
+const Promise = require('bluebird');
 
 function execPromise(command) {
   return new Promise(function(resolve, reject) {
@@ -12,6 +14,29 @@ function execPromise(command) {
         return;
       }
       resolve(stdout);
+    });
+  });
+}
+
+function openFile(fileName) {
+// 'state.json'
+  return new Promise(function(resolve, reject) {
+    fs.readFile(fileName, 'utf8', function (err,data) {
+      if (err) {
+        reject(err);
+      }
+      resolve(data);
+    });
+  });
+}
+
+function saveFile(fileName, contents) {
+  return new Promise(function(resolve, reject) {
+    fs.writeFile(fileName, contents, function(err) {
+        if(err) {
+          reject(err);
+        }
+        resolve();
     });
   });
 }
@@ -56,6 +81,11 @@ const Config = {
   }
 };
 
+const pad = (val, size = 3) => val.toString().padStart(size, '0');
+const coords = (x, y, z) => ({x: pad(x), y: pad(y), z: pad(z, 2)});
+
+const StateFile = 'state.json';
+const Convert = '/usr/local/bin/convert';
 const ApiBase = 'http://rammb-slider.cira.colostate.edu/data/json/goes-16/full_disk/geocolor';
 const ImageryBase = 'http://rammb-slider.cira.colostate.edu/data/imagery';
 const latestTimesUrl = `${ApiBase}/latest_times.json`;
@@ -65,17 +95,26 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 function getLatestTime() {
   return rp(latestTimesUrl)
     .then(JSON.parse)
-    .then(({timestamps_int: [timestamp]}) => {
-      console.log('Fetching images for', timestamp);
-      date = formatDate(timestamp);
-      return timestamp.toString();
+    .then(({timestamps_int: [timestamp]}) => timestamp.toString())
+    .then((time) => {
+      console.log(`Fetching images for ${time}`);
+      return createOptionsObject(time);
     });
 }
 
-const makeFolders = () => execPromise('mkdir -p output/tiles');
-const trimTime = (time) => ({time, date: time.slice(0, 8)});
+function createOptionsObject(time) {
+  const tag = formatDate(time);
+  return {
+    time,
+    tag,
+    date: time.slice(0, 8),
+    fileName: `output/current_world_${tag}.png`
+  };
+}
 
-function range({max, min}) {
+const makeFolders = () => execPromise('mkdir -p output/tiles');
+
+const range = ({max, min}) => {
   const output = [];
   for (let i = min; i < max; i++) {
     output.push(i);
@@ -93,58 +132,29 @@ function tuples() {
   return tuples;
 }
 
-// function downloadImagesP(date, time) {
-//   const z = zoom.toString().padStart(2, '0');
-//   tuples().reduce((promise, {x, y}) => {
-//     return promise.then(() => {
-//       const yi = y.toString().padStart(3, '0');
-//       const xi = x.toString().padStart(3, '0');
-//       return download(imageUrl(date, time, x, y, z), imageName(x, y, z))
-//         .then(() => sleep(100));
-//     });
-//   }, Promise.resolve());
-// }
-
-function downloadImages(date, time) {
-  let chain = Promise.resolve();
-  const z = zoom.toString().padStart(2, '0');
-  for (let yIndex of range(Config.bounds.y)) {
-    const y = yIndex.toString().padStart(3, '0');
-    for (let xIndex of range(Config.bounds.x)) {
-      const x = xIndex.toString().padStart(3, '0');
-      chain = chain.then(() => {
-        return download(imageUrl(date, time, x, y, z), imageName(x, y, z))
-          .then(() => sleep(100))
-      });
-    }
-  }
-  return chain;
+function downloadImagesP(date, time) {
+  return tuples().reduce((promise, {x, y}) => {
+    return promise.then(() => {
+      return download(imageUrl(date, time, coords(x, y, zoom)), imageName(coords(x, y, zoom)))
+        .then(() => sleep(100));
+    });
+  }, Promise.resolve());
 }
 
-function mergeImages() {
+function mergeImages(fileName) {
   const promises = [];
-  const convert = '/usr/local/bin/convert';
-  let finalCommand = `${convert} `;
-  const z = zoom.toString().padStart(2, '0');
-  for (let yIndex = Config.bounds.y.min; yIndex < Config.bounds.y.max; yIndex++) {
-    const y = yIndex.toString().padStart(3, '0');
-    let rowCommand = `${convert} `;
-    for (let xIndex = Config.bounds.x.min; xIndex < Config.bounds.x.max; xIndex++) {
-      const x = xIndex.toString().padStart(3, '0');
-      rowCommand += ' ' + imageName(x, y, z);
-    }
+  let finalCommand = range(Config.bounds.y).reduce((command, y) => {
+    let rowCommand = range(Config.bounds.x)
+      .reduce((s, x) => s + ` ${imageName(coords(x, y, zoom))}`, `${Convert} `);
     rowCommand += ` +append output/row_${y}.png`;
-    finalCommand += ` output/row_${y}.png`;
     console.log(rowCommand);
     promises.push(execPromise(rowCommand));
-  }
-  fileName = `output/current_world_${date}.png`;
+
+    return command + ` output/row_${y}.png`;
+  }, `${Convert} `);
   finalCommand += ` -append ${fileName}`;
   console.log(finalCommand);
-  return Promise.all(promises).
-    then(() => {
-      return execPromise(finalCommand);
-    });
+  return Promise.all(promises).then(() => execPromise(finalCommand));
 }
 
 function formatDate(timestamp) {
@@ -163,26 +173,45 @@ function cleanUp() {
   return execPromise(`rm -r output/row_* output/tiles/`);
 }
 
-function imageUrl(date, time, x, y, z) {
-  return `${ImageryBase}/${date}/goes-16---full_disk/geocolor/${time}/${z}/${y}_${x}.png`;
+const imageUrl = (date, time, {x, y, z}) =>
+  `${ImageryBase}/${date}/goes-16---full_disk/geocolor/${time}/${z}/${y}_${x}.png`;
+
+const imageName = ({x, y, z}) => `output/tiles/${z}_${y}_${x}.png`;
+
+const setWallpaper = (fileName) =>
+  execPromise(`osascript -e 'tell application "Finder" to set desktop picture` +
+    ` to "${__dirname}/${fileName}" as POSIX file'`);
+
+function checkState(options) {
+  return openFile(StateFile)
+    .then(JSON.parse)
+    .then(({images}) => {
+      if (images[options.time]) {
+        throw new Error('Image exists, no need to run script.');
+      }
+    });
 }
 
-function imageName(x, y, z) {
-  return `output/tiles/${z}_${y}_${x}.png`;
+function updateOptions(options) {
+  return openFile(StateFile)
+    .then(JSON.parse)
+    .then((state) => {
+      state.images[options.time] = options;
+      return JSON.stringify(state);
+    })
+    .then((contents) => saveFile(StateFile, contents));
 }
 
-function setWallpaper() {
-  return execPromise(`osascript -e 'tell application "Finder" to set desktop picture to "${__dirname}/${fileName}" as POSIX file'`);
-}
-
-let date = '';
-let fileName = '';
 Promise.resolve()
+  .tap(() => console.log('running goes fetcher!', new Date()))
   .then(makeFolders)
   .then(getLatestTime)
-  .then(trimTime)
-  .then(({date, time}) => downloadImages(date, time))
-  .then(mergeImages)
-  .then(cleanUp)
-  .then(setWallpaper)
-  .catch((e, uri) => console.log(e, uri));
+  .tap(checkState)
+  .tap(({date, time}) => downloadImagesP(date, time))
+  .tap(({fileName}) => mergeImages(fileName))
+  .tap(({fileName}) => setWallpaper(fileName))
+  .tap(updateOptions)
+  .tap(cleanUp)
+  .catch((e, uri) => console.log(e, uri))
+  .catch(console.error)
+  .tap(() => console.log('completed goes fetcher', new Date()))
