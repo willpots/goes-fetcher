@@ -47,7 +47,8 @@ function shouldFetchImage(time) {
 function updateOptions(options) {
   return openJson(StatePath)
     .then((state) => {
-      state.images[options.time] = options;
+      state.images = {[options.time]: options};
+      // state.images[options.time] = options;
       return JSON.stringify(state);
     })
     .then((contents) => saveFile(StatePath, contents));

@@ -1,6 +1,6 @@
 # GOES Background
 
-## Installation
+## Server Installation
 
 1. Install Homebrew.
 2. Install ImageMagick/GraphicsMagick/Node.

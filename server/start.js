@@ -3,7 +3,7 @@
 const Logger = require('./logger');
 const GOES = require('./goes');
 
-Logger.severity = Logger.severities.DEBUG;
+Logger.severity = Logger.severities.INFO;
 
 let running;
 
