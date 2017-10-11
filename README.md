@@ -11,3 +11,8 @@ brew install imagemagick graphicsmagick node
 ```
 npm install
 ```
+4. Start the server
+```
+cd server
+node start.js
+```
