@@ -32,7 +32,5 @@ function startServer() {
   }
 }
 
-
 // start server on running
 startServer();
-

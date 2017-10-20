@@ -14,11 +14,8 @@ String.prototype.padStart = function(targetLength, paddedString = ' ') {
 };
 
 const pad = (val, size = 3) => val.toString().padStart(size, '0');
-
 const coords = (x, y, z) => ({x: pad(x), y: pad(y), z: pad(z, 2)});
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const range = ({max, min}) => {
   const output = [];
