@@ -16,7 +16,7 @@ const Config = {
   // Boundary for the US (at zoom 4)
   Zoom: 4,
   Bounds: {
-    X: {min: 3, max: 11},
+    X: {min: 1, max: 9},
     Y: {min: 0, max: 6}
   }
 };

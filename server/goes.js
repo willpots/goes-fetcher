@@ -5,7 +5,7 @@ const rp = require('request-promise');
 const {StatePath, LatestTimesUrl} = require('./config');
 const createImage = require('./create_image');
 const Errors = require('./errors');
-const {openJson, saveFile} = require('./file');
+const {openJson, saveFile, deleteFile} = require('./file');
 const Logger = require('./logger');
 const {formatDate} = require('./util');
 const setWallpaper = require('./mac');
@@ -38,7 +38,7 @@ function createOptionsObject(time) {
 function shouldFetchImage(time) {
   return openJson(StatePath)
     .then(({images}) => {
-      if (images[time]) {
+      if (images && images[time]) {
         throw new Errors.ImageExistsError(`Image already exists at ${time}`);
       }
     });
@@ -47,11 +47,35 @@ function shouldFetchImage(time) {
 function updateOptions(options) {
   return openJson(StatePath)
     .then((state) => {
-      state.images = {[options.time]: options};
-      // state.images[options.time] = options;
+      state = state || {};
+      state.images = state.images || {};
+      state.images[options.time] = options;
+
       return JSON.stringify(state);
     })
     .then((contents) => saveFile(StatePath, contents));
+}
+
+function deleteOldImages() {
+  let idealState;
+  return openJson(StatePath)
+    .then((state) => {
+      idealState = state;
+      const keys = Object.keys(state.images);
+      const maxDate =
+        Math.max.apply(null, keys.map((k) => parseInt(k))).toString();
+      return Promise.all(keys.map((key) => {
+        const {fileName} = state.images[key];
+        if (key === maxDate) {
+          Logger.info(`Keeping ${fileName}`);
+          idealState = {images: {[key]: state.images[key]}};
+          return;
+        }
+        Logger.info(`Deleting ${fileName}`);
+        return deleteFile(fileName);
+      }));
+    })
+    .then(() => saveFile(StatePath, JSON.stringify(idealState)));
 }
 
 function fetchLatestImage() {
@@ -68,7 +92,8 @@ function fetchLatestImage() {
       } else {
         throw e;
       }
-    });
+    })
+    .then(deleteOldImages);
 }
 
 module.exports = {fetchLatestImage};

@@ -1,5 +1,5 @@
 const Config = require('./config');
-const {appendFile} = require('./file');
+const fs = require('fs');
 
 const Logger = {
   severity: 2,
@@ -31,7 +31,7 @@ const Logger = {
     const _timestamp = new Date().toString();
     const _message = `[${Logger.tag[severity]}] ${_timestamp}: ${message}`;
     Logger.method[severity](_message);
-    appendFile(Config.LogPath, `${_message}\n`);
+    fs.appendFile(Config.LogPath, `${_message}\n`, (error, data) => undefined);
   },
   debug(message) {
     Logger._logMessage('DEBUG', message);
