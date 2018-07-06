@@ -9,10 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mapbox/blend": "^2.0.0",
     "bluebird": "^3.5.0",
     "fetch-promise": "^1.0.2",
-    "gm": "^1.23.0",
-    "request": "^2.82.0",
+    "gm": "^1.23.1",
+    "request": "^2.87.0",
     "request-promise": "^4.2.2"
   }
 }

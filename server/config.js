@@ -1,13 +1,11 @@
 'use strict';
 
 const Config = {
-  Convert: '/usr/local/bin/convert',
 
   LogPath: 'goes.log',
 
   StatePath: 'state.json',
   Shell: '/bin/zsh',
-  MaxRetries: 2,
 
   ApiBase: 'http://rammb-slider.cira.colostate.edu/data/json/goes-16/full_disk/geocolor',
   ImageryBase: 'http://rammb-slider.cira.colostate.edu/data/imagery',

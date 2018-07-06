@@ -10,5 +10,8 @@
       "allow": ["warn", "error", "log"]
     }],
     "curly": [2, "all"]
+  },
+  parserOptions: {
+    ecmaVersion: 8
   }
 }
