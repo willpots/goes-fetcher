@@ -42,6 +42,17 @@ function deleteFile(fileName) {
   });
 }
 
+async function writeFile(fileName, data) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(fileName, data, (err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve();
+    });
+  });
+}
+
 function appendFile(fileName, contents) {
   return new Promise((resolve, reject) => {
     fs.appendFile(fileName, contents, callback(resolve, reject));
@@ -53,5 +64,6 @@ module.exports = {
   deleteFile,
   openFile,
   saveFile,
+  writeFile,
   openJson
 };
