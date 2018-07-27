@@ -2,13 +2,13 @@
 
 const Promise = require('bluebird');
 const rp = require('request-promise');
-const {StatePath, LatestTimesUrl} = require('./config');
+const {StatePath, LatestTimesUrl} = require('../common/config');
 const createImage = require('./create_image');
 const Errors = require('./errors');
-const {openJson, saveFile, deleteFile} = require('./file');
-const Logger = require('./logger');
+const {openJson, deleteFile} = require('../common/file');
+const {saveFile, cleanFolder} = require('./aws');
+const Logger = require('../common/logger');
 const {formatDate} = require('./util');
-const setWallpaper = require('./mac');
 
 function getLatestTime() {
   return rp(LatestTimesUrl)
@@ -19,6 +19,7 @@ function getLatestTime() {
       return createOptionsObject(time);
     });
 }
+
 function createOptionsObject(time) {
   Logger.info(time);
   const tag = formatDate(time);
@@ -26,74 +27,59 @@ function createOptionsObject(time) {
     time,
     tag,
     date: time.slice(0, 8),
-    fileName: `output/current_world_${tag}.png`
+    fileName: `output/current_world/${tag}.png`
   };
 }
+
 /**
  * Whether the image already exists or not.
  *
  * @param  {string} time timestamp for the image
  * @return {!Promise<boolean>}
  */
-function shouldFetchImage(time) {
-  return openJson(StatePath)
-    .then(({images}) => {
-      if (images && images[time]) {
-        throw new Errors.ImageExistsError(`Image already exists at ${time}`);
-      }
-    });
+async function shouldFetchImage(time) {
+  const {images} = await fetchState();
+  if (images && images[time]) {
+    throw new Errors.ImageExistsError(`Image already exists at ${time}`);
+  }
 }
 
-function updateOptions(options) {
-  return openJson(StatePath)
-    .then((state) => {
-      state = state || {};
-      state.images = state.images || {};
-      state.images[options.time] = options;
-
-      return JSON.stringify(state);
-    })
-    .then((contents) => saveFile(StatePath, contents));
+async function fetchState() {
+  try {
+    const content = await rp(
+      'https://san-benito.nyc3.digitaloceanspaces.com/state.json');
+    return JSON.parse(content);
+  } catch (e) {
+    return {error: true};
+  }
 }
 
-function deleteOldImages() {
-  let idealState;
-  return openJson(StatePath)
-    .then((state) => {
-      idealState = state;
-      const keys = Object.keys(state.images);
-      const maxDate =
-        Math.max.apply(null, keys.map((k) => parseInt(k))).toString();
-      return Promise.all(keys.map((key) => {
-        const {fileName} = state.images[key];
-        if (key === maxDate) {
-          Logger.info(`Keeping ${fileName}`);
-          idealState = {images: {[key]: state.images[key]}};
-          return;
-        }
-        Logger.info(`Deleting ${fileName}`);
-        return deleteFile(fileName);
-      }));
-    })
-    .then(() => saveFile(StatePath, JSON.stringify(idealState)));
+async function updateOptions(options) {
+  const state = await fetchState() || {};
+  state.images = state.images || {};
+  state.images[options.time] = options;
+  state.latest = options.fileName;
+
+  return saveFile(StatePath, JSON.stringify(state));
 }
 
-function fetchLatestImage() {
-  return Promise.resolve()
-    .then(getLatestTime)
-    .tap(({time}) => shouldFetchImage(time))
-    .tap(({date, time, fileName}) => createImage(date, time, fileName))
-    .tap(({fileName}) => setWallpaper(fileName))
-    .tap(updateOptions)
-    .tap(({time}) => Logger.info(`Finished fetching image for ${time}`))
-    .catch((e) => {
-      if (e instanceof Errors.ImageExistsError) {
-        Logger.info(e);
-      } else {
-        throw e;
-      }
-    })
-    .then(deleteOldImages);
+async function fetchLatestImage() {
+  try {
+    const {date, time, fileName} = await getLatestTime();
+
+    await shouldFetchImage(time);
+    await createImage(date, time, fileName);
+    await updateOptions({date, time, fileName});
+    await cleanFolder();
+    Logger.info(`Finished fetching image for ${time}`);
+  } catch (e) {
+    if (e instanceof Errors.ImageExistsError) {
+      Logger.info(e);
+    } else {
+      throw e;
+    }
+  }
+  Logger.info('Loop finished');
 }
 
 module.exports = {fetchLatestImage};

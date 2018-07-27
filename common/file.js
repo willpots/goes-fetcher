@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Promise = require('bluebird');
-const Logger = require('./logger');
+const Logger = require('../common/logger');
 
 function callback(resolve, reject) {
   return function(err, data) {

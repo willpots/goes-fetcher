@@ -2,14 +2,15 @@
   "name": "goes_fetcher",
   "version": "1.0.0",
   "description": "",
-  "main": "fetch.js",
   "scripts": {
+    "server": "node server/start.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@mapbox/blend": "^2.0.0",
+    "aws-sdk": "^2.270.1",
     "bluebird": "^3.5.0",
     "fetch-promise": "^1.0.2",
     "gm": "^1.23.1",

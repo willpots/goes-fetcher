@@ -1,9 +1,8 @@
 'use strict';
 
-const {Shell} = require('./config');
 const Promise = require('bluebird');
 const { exec } = require('child_process');
-const Config = require('./config');
+const Config = require('../common/config');
 
 String.prototype.padStart = function(targetLength, paddedString = ' ') {
   let output = this.toString();
@@ -44,13 +43,13 @@ function formatDate(timestamp) {
   const hour = timestamp.slice(8, 10);
   const minute = timestamp.slice(10, 12);
   const seconds = timestamp.slice(12, 14);
-  return `${year}_${month}_${day}_${hour}_${minute}_${seconds}`;
+  return `${year}/${month}/${day}/${hour}_${minute}_${seconds}`;
 }
 
 function execPromise(command) {
   return new Promise(function(resolve, reject) {
     exec(command, {
-      shell: Shell
+      shell: Config.Shell
     }, (err, stdout, stderr) => {
       if (err) {
         reject(err, stderr);

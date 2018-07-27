@@ -1,9 +1,10 @@
 'use strict';
 
 const blend = require('@mapbox/blend');
-const {writeFile} = require('./file');
+const {saveFile} = require('./aws');
+const Logger = require('../common/logger');
 const download = require('./download');
-const {Bounds, ImageryBase, Zoom} = require('./config');
+const {Bounds, ImageryBase, Zoom} = require('../common/config');
 const Promise = require('bluebird');
 const util = require('./util');
 
@@ -19,6 +20,7 @@ async function downloadImagesP(date, time) {
   for (const {x, y} of util.tuples()) {
     const coords = util.coords(x, y, Zoom);
     IMAGES[x] = IMAGES[x] || [];
+    Logger.info('Downloading ' + imageUrl(date, time, coords));
     IMAGES[x][y] = await download(
       imageUrl(date, time, coords), imageName(coords));
     await util.sleep(100);
@@ -45,7 +47,8 @@ async function mergeImages(IMAGES, fileName) {
       resolve(data);
     })
   });
-  await writeFile(fileName, result);
+  Logger.info('Saving image ' + fileName);
+  await saveFile(fileName, result);
 }
 
 async function createImage(date, time, fileName) {

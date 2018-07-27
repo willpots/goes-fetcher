@@ -1,7 +1,7 @@
 'use strict';
 
 const Promise = require('bluebird');
-const Logger = require('./logger');
+const Logger = require('../common/logger');
 const request = require('request').defaults({encoding: null});
 
 async function download(uri) {

@@ -1,6 +1,6 @@
 'use strict';
 
-const Logger = require('./logger');
+const Logger = require('../common/logger');
 const {execPromise} = require('./util');
 
 function setWallpaper(fileName) {

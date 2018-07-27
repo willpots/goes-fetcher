@@ -2,8 +2,9 @@
 
 const Config = {
 
-  LogPath: 'goes.log',
+  LogPath: '../goes.log',
 
+  BucketName: 'nyc3.digitaloceanspaces.com',
   StatePath: 'state.json',
   Shell: '/bin/zsh',
 
