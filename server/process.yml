@@ -1,0 +1,3 @@
+apps:
+  - script: start.js
+    name: 'goes-fetcher'
