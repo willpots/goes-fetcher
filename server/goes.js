@@ -56,7 +56,7 @@ async function fetchState() {
 
 async function updateOptions(options) {
   const state = await fetchState() || {};
-  state.images = state.images || {};
+  state.images = {};
   state.images[options.time] = options;
   state.latest = options.fileName;
 
