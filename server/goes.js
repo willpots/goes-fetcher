@@ -2,7 +2,7 @@
 
 const Promise = require('bluebird');
 const rp = require('request-promise');
-const {StatePath, LatestTimesUrl} = require('../common/config');
+const {StatePath, LatestTimesUrl, OutputPath} = require('../common/config');
 const createImage = require('./create_image');
 const Errors = require('./errors');
 const {openJson, deleteFile} = require('../common/file');
@@ -27,7 +27,7 @@ function createOptionsObject(time) {
     time,
     tag,
     date: time.slice(0, 8),
-    fileName: `output/current_world/${tag}.png`
+    fileName: `${OutputPath}current_world/${tag}.png`
   };
 }
 
@@ -47,7 +47,7 @@ async function shouldFetchImage(time) {
 async function fetchState() {
   try {
     const content = await rp(
-      'https://san-benito.nyc3.digitaloceanspaces.com/state.json');
+      `https://san-benito.nyc3.digitaloceanspaces.com/${StatePath}`);
     return JSON.parse(content);
   } catch (e) {
     return {error: true};

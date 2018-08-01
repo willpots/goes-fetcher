@@ -2,18 +2,16 @@
 
 const aws = require('aws-sdk');
 const Logger = require('../common/logger');
-const {BucketName} = require('../common/config');
+const {BucketName, BucketHost} = require('../common/config');
 
-const endpoint = new aws.Endpoint(BucketName);
+const endpoint = new aws.Endpoint(BucketHost);
 const s3 = new aws.S3({endpoint});
-
-const Bucket = 'san-benito';
 
 async function saveFile(Key, Body) {
   return new Promise((resolve, reject) => {
     s3.putObject({
       ACL: 'public-read',
-      Bucket,
+      Bucket: BucketName,
       Key,
       Body
     }, (err) => {
@@ -49,7 +47,7 @@ function getYesterdayKey() {
 const Prefix = 'output/';
 
 async function cleanFolder(){
-  const params = {Bucket, Prefix};
+  const params = {Bucket: BucketName, Prefix};
 
   return new Promise((resolve, reject) => {
     s3.listObjects(params, (err, data) => {
@@ -61,7 +59,7 @@ async function cleanFolder(){
         resolve();
       }
 
-      const params = {Bucket};
+      const params = {Bucket: BucketName};
       params.Delete = {
         Objects: data.Contents
           .map(({Key}) => ({Key}))

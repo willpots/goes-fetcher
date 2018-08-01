@@ -4,8 +4,10 @@ const Config = {
 
   LogPath: '../goes.log',
 
-  BucketName: 'nyc3.digitaloceanspaces.com',
+  BucketName: 'san-benito',
+  BucketHost: 'nyc3.digitaloceanspaces.com',
   StatePath: 'state.json',
+  OutputPath: 'output/',
   Shell: '/bin/zsh',
 
   ApiBase: 'http://rammb-slider.cira.colostate.edu/data/json/goes-16/full_disk/geocolor',
