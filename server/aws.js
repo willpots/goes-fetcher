@@ -1,6 +1,7 @@
 'use strict';
 
 const aws = require('aws-sdk');
+
 const Logger = require('../common/logger');
 const {BucketName, BucketHost} = require('../common/config');
 

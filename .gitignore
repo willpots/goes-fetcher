@@ -2,3 +2,5 @@ output/
 node_modules/
 *.log
 state.json
+dist/
+astronaut/build/

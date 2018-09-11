@@ -1,0 +1,23 @@
+{
+  "name": "goes_fetcher",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "server": "node server/start.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Will Potter",
+  "license": "ISC",
+  "dependencies": {
+    "@mapbox/blend": "^2.0.0",
+    "aws-sdk": "^2.313.0",
+    "bluebird": "^3.5.2",
+    "fetch-promise": "^1.0.2",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "electron": "^2.0.9",
+    "electron-builder": "^20.28.4"
+  }
+}

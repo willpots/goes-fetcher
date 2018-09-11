@@ -1,12 +1,13 @@
 'use strict';
 
 const blend = require('@mapbox/blend');
-const {saveFile} = require('./aws');
-const Logger = require('../common/logger');
-const download = require('./download');
-const {Bounds, ImageryBase, Zoom} = require('../common/config');
 const Promise = require('bluebird');
-const util = require('./util');
+
+const {saveFile} = require('../server/aws');
+const Logger = require('../common/logger');
+const download = require('../server/download');
+const {Bounds, ImageryBase, Zoom} = require('../common/config');
+const util = require('../common/util');
 
 const imageUrl = (date, time, {x, y, z}) =>
   `${ImageryBase}/${date}/goes-16---full_disk/geocolor/${time}/${z}/${y}_${x}.png`;

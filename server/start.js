@@ -2,7 +2,7 @@
 
 const Logger = require('../common/logger');
 const Repeater = require('../common/repeater');
-const GOES = require('./goes');
+const GOES = require('../server/goes');
 
 Logger.severity = Logger.severities.INFO;
 

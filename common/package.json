@@ -1,0 +1,10 @@
+{
+  "name": "goes-common",
+  "version": "1.0.0",
+  "description": "a common library for goes code",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.5.2"
+  }
+}
