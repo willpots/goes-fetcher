@@ -4,3 +4,4 @@ node_modules/
 state.json
 dist/
 astronaut/build/
+current_world*.png
